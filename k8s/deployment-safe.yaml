@@ -1,0 +1,47 @@
+# The safe version. Two changes from deployment-naive.yaml stop the errors:
+# 1. readinessProbe: a pod gets traffic only after it answers the known test case correctly.
+# 2. preStop sleep: a stopping pod keeps serving while it is removed from the Service.
+# maxUnavailable 0 is already the default for 3 replicas; it is written out so it stays 0 if replicas change.
+# progressDeadlineSeconds 30 changes no traffic; it makes a stuck rollout report itself.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quote
+  namespace: rollouts
+spec:
+  replicas: 3
+  progressDeadlineSeconds: 30
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: quote
+  template:
+    metadata:
+      labels:
+        app: quote
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: app
+          image: quote:v1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet: {path: /readyz, port: 8080}
+            periodSeconds: 1
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: {path: /healthz, port: 8080}
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          lifecycle:
+            preStop:
+              sleep: {seconds: 5}
+          resources:
+            requests: {cpu: 50m, memory: 32Mi}
+            limits: {cpu: 200m, memory: 64Mi}

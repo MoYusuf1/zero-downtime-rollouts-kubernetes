@@ -1,0 +1,15 @@
+# One control plane and two workers. Port 18080 on this PC goes to the app's NodePort.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: rollouts
+# nftables mode: iptables mode needs the xt_statistic kernel module, which some kernels do not load.
+networking:
+  kubeProxyMode: nftables
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 30080
+        hostPort: 18080
+        listenAddress: "127.0.0.1"
+  - role: worker
+  - role: worker

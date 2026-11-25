@@ -1,0 +1,14 @@
+# NodePort 30080 is mapped to localhost:18080 by cluster/kind.yaml.
+apiVersion: v1
+kind: Service
+metadata:
+  name: quote
+  namespace: rollouts
+spec:
+  type: NodePort
+  selector:
+    app: quote
+  ports:
+    - port: 80
+      targetPort: 8080
+      nodePort: 30080
